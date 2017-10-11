@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import numpy as np
+
 copyright_notice= """
     jpeg_read.py - jpeg decoder.
     Copyright (C) 2010 Mats Alritzson 
@@ -532,28 +534,15 @@ def C(x):
       return 1.0
 
 # Lookup table to speed up IDCT somewhat
-idct_table= [ [(C(u)*cos(((2.0*x+1.0)*u*pi)/16.0)) for x in range(idct_precision)] for u in range(idct_precision) ]
+idct_table= np.array([ [(C(u)*cos(((2.0*x+1.0)*u*pi)/16.0)) for x in range(idct_precision)] for u in range(idct_precision) ]).astype('float32').T
+idct_table_transpose = idct_table.T
 range8= range(8)
 rangeIDCT= range(idct_precision)
 
 
 def idct(matrix):
    """ Converts from frequency domain ordinary(?) """
-   out= [ range(8) for i in range(8)]
-
-   # Iterate over every pixel in the block
-   for x in range8:
-      for y in range8:
-         sum= 0
-
-         # Iterate over every coefficient
-         # in the DU
-         for u in rangeIDCT:
-            for v in rangeIDCT:
-               sum+= matrix[v][u]*idct_table[u][x]*idct_table[v][y]
-
-         out[y][x]= sum//4
-
+   out = (np.dot(np.dot(idct_table, np.array(matrix)), idct_table_transpose) // 4).astype('int32')
    return out
 
 
